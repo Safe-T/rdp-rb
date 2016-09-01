@@ -16,6 +16,9 @@ using any binding for C or other languages
 Directory Structure
 -------------------
 
+Resources
+---------
+[RDP resources](https://github.com/Safe-T/rdp-rb/wiki/Remote-Desktop-Protcol-(RDP)-Refrences)
 
 Roadmap
 -------
