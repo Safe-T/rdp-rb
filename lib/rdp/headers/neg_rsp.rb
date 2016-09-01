@@ -56,10 +56,10 @@ module RDP
     def parse_array(payload)
       raise RDP::RDPException.new('Invalid payload array size')     if payload.length != 4
       raise RDP::RDPException.new('Invalid data for type')      unless payload[0] == RDP::TYPE_RDP_NEG_RSP
-      raise RDP::RDPException.new('Invalid length size')        unless payload[2] == 0x008 # length (2 bytes): A 16-bit,
-                                                                                           # unsigned integer that specifies the
-                                                                                           # packet size. This field MUST be set
-                                                                                           # to 0x0008 (8 bytes)
+      raise RDP::RDPException.new('Invalid length size')        unless payload[2] == RDP::NEG_RSP_LENGTH    # length (2 bytes): A 16-bit,
+                                                                                                            # unsigned integer that specifies the
+                                                                                                            # packet size. This field MUST be set
+                                                                                                            # to 0x0008 (8 bytes)
   
       @flags = payload[1]
       raise RDP::RDPException.new('Invalid flags') unless (1..RDP::NEG_RSP_ALL_FLAGS).include?(@flags)
