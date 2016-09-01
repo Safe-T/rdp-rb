@@ -1,7 +1,7 @@
 require 'socket'
 require_relative '../lib/rdp'
 
-def first_responce(selected, flags = 0, error=false)
+def first_response(selected, flags = 0, error=false)
   # calculating the entire size of the entire packet
   length = RDP::TPDU_CONNECTION_CONFIRM_LENGTH
 
@@ -34,8 +34,8 @@ def listen
     rdp.read
     puts "Got From Client:\r\n #{rdp.explain}"
     
-    puts 'Going to send first responce:'
-    client.write(first_responce(RDP::ERR_SSL_NOT_ALLOWED_BY_SERVER, 0, true ) )
+    puts 'Going to send first response:'
+    client.write(first_response(RDP::ERR_SSL_NOT_ALLOWED_BY_SERVER, 0, true ) )
     puts 'sent it'
     
     rdp.read
