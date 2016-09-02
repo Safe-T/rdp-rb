@@ -98,38 +98,38 @@
 #
 
 module RDP
-  
+
   class X224Header
-    
+
     attr_accessor :length, :pdu_type, :variable_part, :variable, :neg_req, :neg_correlation_info
-    
+
     def initialize(payload)
       @payload = payload
       @neg_req = nil
-      
+
       parse! unless @payload.nil?
     end
-    
+
     def parse!
       full_data               = @payload.byteslice(0..6)
       tmp                     = full_data.unpack('C*')
-      
+
       @length                 = tmp[0]
       @pdu_type               = tmp[1]
       @var_length             = 0
       @neg_req_length         = 0
       @neg_correlation_length = 0 # to make sure we have it, for now, there is no use for it
-      
+
       # extract cookie/connection routing
       extract_variable
-      
+
       # extract rdpNegReq info
       extract_negotiation_request
-      
+
       # extract rdpCorrelationInfo
       extract_correlation_info
     end
-        
+
     # The following method generate an x.224 CCF header in bytes
     #
     # Parameters:
@@ -147,23 +147,23 @@ module RDP
           length,
           code
       ]
-      
+
       # data
       if code == RDP::X224_TPDU_DATA
         base << RDP::X224_TPDU_DISCONNECT_REQUEST
         return base.pack('CCC')
       end
-      
+
       # non data
       base << dst_ref     # DST-REF
       base << src_ref     # SRC-REF
       base << kclass      # Class 0
-    
+
       base.pack('CCnnC')
     end
-    
+
     def extract_variable
-      
+
       # routingToken (variable): An optional and variable-length routing
       # token (used for load balancing) terminated by a 0x0D0A two-byte
       # sequence: (check [MSFT-SDLBTS] for details!)
@@ -173,24 +173,24 @@ module RDP
       # cookie (variable): An optional and variable-length ANSI character
       # string terminated by a 0x0D0A two-byte sequence:
       # Cookie:[space]mstshash=[ANSISTRING][\x0D\x0A]
-      
-      
+
+
       # is there at least a length for the minimal cookie part?
       # *NOTE*: it does not indicate anything yet, just a possibility
       if @length >= RDP::RDP_COOKIE_MIN_SIZE
-        
+
         @variable_part = @payload.byteslice(RDP::X224_CRQ_SIZE..@payload.index("\r\n") + 1)
-        
+
         raise RDP::RDPException.new('Invalid variable content') if  @variable_part.empty?
-        
+
         # set the variable size
         @var_length = @variable_part.length
-        
+
         # remove CR+LF <- it's just an indicator, not part of the value
         @variable = @variable_part.chomp
       end
     end
-    
+
     def variable_as_ip
       if variable_type == :routingToken
         @variable.to_s =~ /msts=(\d*)\.(\d*)\./
@@ -202,33 +202,32 @@ module RDP
         false
       end
     end
-    
+
     def extract_negotiation_request
-      
       # do we have (or think we have) RDP NEGOTIATION header?
       if @length >= @var_length + RDP::RDP_NEG_REQ_SIZE
         data = @payload.byteslice((RDP::X224_CRQ_SIZE + @var_length)..(RDP::X224_CRQ_SIZE + @var_length) + RDP::RDP_NEG_REQ_SIZE)
         parsing = data.unpack('CCvV')
-        
+
         # puts "parsing: #{parsing}"
-        
+
         raise RDP::RDPException.new('Invalid negotiation length')              unless                                      parsing[2] == 0x0008 # it must be always equal to 8
         raise RDP::RDPException.new('Invalid negotiation request type')        unless                                      parsing[0] == RDP::TYPE_RDP_NEG_REQ
         raise RDP::RDPException.new('Invalid negotiation requested protocols')     if                                      parsing[3]  > RDP::PROTOCOL_ALL
-        
+
         raise RDP::RDPException.new('Invalid negotiation flag')                unless [0,   # documented only at the example level :'(
                                                                                RDP::RESTRICTED_ADMIN_MODE_REQUIRED,
                                                                                RDP::CORRELATION_INFO_PRESENT].        include?    parsing[1]
-        
+
         # know to take in consideration the position of neg req
         @neg_req_length = RDP::RDP_NEG_REQ_SIZE
         @neg_req = NegReqHeader.new(parsing)
-        
+
         # puts @neg_req.inspect
-      
+
       end
     end
-    
+
     def extract_correlation_info
       if @length >= @var_length + @neg_req_length + RDP::RDP_CORRELATION_INFO_SIZE
         data = @payload.byteslice((RDP::X224_CRQ_SIZE + @var_length)..(RDP::X224_CRQ_SIZE + @var_length) + RDP::RDP_CORRELATION_INFO_SIZE)
@@ -246,48 +245,48 @@ module RDP
         #     reserved (16 bytes): An array of sixteen 8-bit, unsigned integers reserved for future use. All sixteen
         #     integers within this array MUST be set to zero.
         parsing = data.unpack('CCvC16C16')
-        
+
         raise RDP::RDPException.new('Invalid correlation header content') unless parsing.count == 7
-        
+
         raise RDP::RDPException.new('Invalid correlation version') unless parsing[0] == RDP::TYPE_RDP_CORRELATION_INFO
         raise RDP::RDPException.new('Invalid correlation flags')   unless parsing[1] == 0x00
         raise RDP::RDPException.new('Invalid correlation length')  unless parsing[2] == 0x0024
-        
+
         # Important!
         # DO NOT VALIDATE CorrelationId and Reserved in this location, they are they are not yet fully parsed here!
         # so the parsing and the validated happens only at NegCorrelationInfoHeader class
         # Important!
-        
+
         # puts parsing.inspect
         @neg_correlation_length = RDP::RDP_CORRELATION_INFO_SIZE
         @neg_correlation_info   = RDP::NegCorrelationInfoHeader.new(parsing)
-        
+
       end
     end
-    
+
     def variable_type
       # The routingToken can be converted back to IP address by using the following logic
       # "msts=420247818.15629.0000" =~ /^msts=(\d*)\.(\d*)\./
-      # iphex = sprintf( "%8X", $1 )
-      # porthex = sprintf( "%4X", $2 )
+      # iphex = format('%8X', $1)
+      # porthex = format('%4X', $2)
       # iphex =~ /(..)(..)(..)(..)/s
       # "#{$4.hex}.#{$3.hex}.#{$2.hex}.#{$1.hex}"
-      
+
       return :no_var       if @variable.nil?
       return :cookie if @variable.start_with? 'Cookie: mstshash='
       return :routingToken       if @variable.start_with? 'Cookie: msts='
-      
+
       :type_unknown
     end
-    
+
     def cookie?
       variable_type == :cookie
     end
-    
+
     def routing_token?
       variable_type == :routingToken
     end
-  
+
   end
 
 end
