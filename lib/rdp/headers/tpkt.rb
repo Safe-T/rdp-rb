@@ -33,22 +33,22 @@
 module RDP
   class TPKTHeaderParser
     attr_accessor :version, :flags, :data
-    
+
     def initialize(payload)
       @payload = payload
-      
+
       parse! unless @payload.nil?
     end
-    
+
     def parse!
       tmp = @payload.unpack('CCn')
-      
+
       @version = tmp[0]
       @flags   = tmp[1]
       @data    = tmp[2]
-    
+
     end
-    
+
     # Create a full TPKT header including the data o send
     #
     # Parameters:
@@ -64,6 +64,6 @@ module RDP
           length#,  # big endian
       ].pack('CCn')
     end
-    
+
   end
 end
