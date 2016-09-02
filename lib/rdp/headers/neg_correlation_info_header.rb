@@ -14,12 +14,12 @@ module RDP
     end
     
     # parse correlationId and reserved
-    # if something is wrong, it will raise an exception of RDP::RDPExceotion
+    # if something is wrong, it will raise an exception of RDP::RDPException
     def parse!
       @correnlation_id = payload[3...20] # extract the information
       @reserved        = payload[20..36] # extract the information
       
-      raise RDP::RDPExceotion.new('Invalid neg_correlation_info correlation_id') unless @correnlation_id.select {
+      raise RDP::RDPException.new('Invalid neg_correlation_info correlation_id') unless @correnlation_id.select {
           |x| x != 0 && x != 0xF4}.count == 0
       
       raise RDP::RDPException.new('Invalid neg_correlation_info reserved') unless @reserved.select{
