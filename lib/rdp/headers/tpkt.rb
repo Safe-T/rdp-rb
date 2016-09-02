@@ -59,9 +59,9 @@ module RDP
     #
     def generate_packet(length)
       [
-          3,       # version
-          0,       # reserved
-          length#,  # big endian
+        3,       # version
+        0,       # reserved
+        length   # big endian
       ].pack('CCn')
     end
 

@@ -11,10 +11,10 @@ module RDP
 
     def proto_s
       str = {
-          RDP::PROTOCOL_RDP        => 'RDP',
-          RDP::PROTOCOL_SSL        => 'SSL/TLS',
-          RDP::PROTOCOL_HYBRID     => 'HYBRID',
-          RDP::PROTOCOL_HYBRID_EXT => 'HYBRID Extended',
+        RDP::PROTOCOL_RDP        => 'RDP',
+        RDP::PROTOCOL_SSL        => 'SSL/TLS',
+        RDP::PROTOCOL_HYBRID     => 'HYBRID',
+        RDP::PROTOCOL_HYBRID_EXT => 'HYBRID Extended',
       }
 
       result = []

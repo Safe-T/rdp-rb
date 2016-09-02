@@ -19,14 +19,13 @@ module RDP
       @correnlation_id = payload[3...20] # extract the information
       @reserved        = payload[20..36] # extract the information
 
-      raise RDP::RDPException.new('Invalid neg_correlation_info correlation_id') unless @correnlation_id.select {
-          |x| x != 0 && x != 0xF4}.count == 0
+      unless @correnlation_id.select { |x| x != 0 && x != 0xF4 }.empty?
+        raise RDP::RDPException, 'Invalid neg_correlation_info correlation_id'
+      end
 
-      raise RDP::RDPException.new('Invalid neg_correlation_info reserved') unless @reserved.select{
-          |x| x != 0}.count == 0
-
+      unless @reserved.select { |x| x != 0 }.empty?
+        raise RDP::RDPException, 'Invalid neg_correlation_info reserved'
+      end
     end
-
   end
-
 end

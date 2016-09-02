@@ -14,7 +14,7 @@
 # When consecutive octets are used to represent a binary number, the lower octet number has the most significant value.
 # NOTES
 # 1 The numbering of bits within an octet is a convention local to this Recommendation | International Standard.
-# 2 The use of the terms “high order” and “low order” is common to this Recommendation | International Standard and to
+# 2 The use of the terms "high order" and "low order" is common to this Recommendation | International Standard and to
 #   adjacent layer Standards.
 # 3 The use of the above conventions does not affect the order of bit transmission on a serial communications link.
 # 4 As described in 6.2.3, both transport entities respect these bit and octet ordering conventions, thus allowing
@@ -181,7 +181,7 @@ module RDP
 
         @variable_part = @payload.byteslice(RDP::X224_CRQ_SIZE..@payload.index("\r\n") + 1)
 
-        raise RDP::RDPException.new('Invalid variable content') if  @variable_part.empty?
+        raise RDP::RDPException, 'Invalid variable content' if  @variable_part.empty?
 
         # set the variable size
         @var_length = @variable_part.length
@@ -194,8 +194,8 @@ module RDP
     def variable_as_ip
       if variable_type == :routingToken
         @variable.to_s =~ /msts=(\d*)\.(\d*)\./
-        iphex = sprintf( "%8X", $1 )
-        porthex = sprintf( "%4X", $2 )
+        iphex = format('%8X', $1)
+        porthex = format('%4X', $2)
         iphex =~ /(..)(..)(..)(..)/s
         "#{$4.hex}.#{$3.hex}.#{$2.hex}.#{$1.hex}"
       else
@@ -211,13 +211,16 @@ module RDP
 
         # puts "parsing: #{parsing}"
 
-        raise RDP::RDPException.new('Invalid negotiation length')              unless                                      parsing[2] == 0x0008 # it must be always equal to 8
-        raise RDP::RDPException.new('Invalid negotiation request type')        unless                                      parsing[0] == RDP::TYPE_RDP_NEG_REQ
-        raise RDP::RDPException.new('Invalid negotiation requested protocols')     if                                      parsing[3]  > RDP::PROTOCOL_ALL
-
-        raise RDP::RDPException.new('Invalid negotiation flag')                unless [0,   # documented only at the example level :'(
-                                                                               RDP::RESTRICTED_ADMIN_MODE_REQUIRED,
-                                                                               RDP::CORRELATION_INFO_PRESENT].        include?    parsing[1]
+        raise RDP::RDPException, 'Invalid negotiation length'              unless parsing[2] == 0x0008 # it must be always equal to 8
+        raise RDP::RDPException, 'Invalid negotiation request type'        unless parsing[0] == RDP::TYPE_RDP_NEG_REQ
+        raise RDP::RDPException, 'Invalid negotiation requested protocols' if     parsing[3]  > RDP::PROTOCOL_ALL
+        unless [
+          0, # documented only at the example level :'(
+          RDP::RESTRICTED_ADMIN_MODE_REQUIRED,
+          RDP::CORRELATION_INFO_PRESENT
+        ].include? parsing[1]
+          raise RDP::RDPException, 'Invalid negotiation flag'
+        end
 
         # know to take in consideration the position of neg req
         @neg_req_length = RDP::RDP_NEG_REQ_SIZE
@@ -246,11 +249,11 @@ module RDP
         #     integers within this array MUST be set to zero.
         parsing = data.unpack('CCvC16C16')
 
-        raise RDP::RDPException.new('Invalid correlation header content') unless parsing.count == 7
+        raise RDP::RDPException, 'Invalid correlation header content' unless parsing.count == 7
 
-        raise RDP::RDPException.new('Invalid correlation version') unless parsing[0] == RDP::TYPE_RDP_CORRELATION_INFO
-        raise RDP::RDPException.new('Invalid correlation flags')   unless parsing[1] == 0x00
-        raise RDP::RDPException.new('Invalid correlation length')  unless parsing[2] == 0x0024
+        raise RDP::RDPException, 'Invalid correlation version' unless parsing[0] == RDP::TYPE_RDP_CORRELATION_INFO
+        raise RDP::RDPException, 'Invalid correlation flags'   unless parsing[1] == 0x00
+        raise RDP::RDPException, 'Invalid correlation length'  unless parsing[2] == 0x0024
 
         # Important!
         # DO NOT VALIDATE CorrelationId and Reserved in this location, they are they are not yet fully parsed here!
@@ -272,9 +275,9 @@ module RDP
       # iphex =~ /(..)(..)(..)(..)/s
       # "#{$4.hex}.#{$3.hex}.#{$2.hex}.#{$1.hex}"
 
-      return :no_var       if @variable.nil?
+      return :no_var if @variable.nil?
       return :cookie if @variable.start_with? 'Cookie: mstshash='
-      return :routingToken       if @variable.start_with? 'Cookie: msts='
+      return :routingToken if @variable.start_with? 'Cookie: msts='
 
       :type_unknown
     end

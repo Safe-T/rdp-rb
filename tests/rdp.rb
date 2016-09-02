@@ -1,7 +1,7 @@
 require 'socket'
 require_relative '../lib/rdp'
 
-def first_response(selected, flags = 0, error=false)
+def first_response(selected, flags = 0, error = false)
   # calculating the entire size of the entire packet
   length = RDP::TPDU_CONNECTION_CONFIRM_LENGTH
 
@@ -15,16 +15,11 @@ def first_response(selected, flags = 0, error=false)
            RDP::NegRspHeader.new(flags: flags, protocol: selected)
          end
 
-  x224_header = x224.generate_x224Ccf_header(RDP::X224_TPDU_CONNECTION_CONFIRM,
-                                      length - 5)
+  x224_header = x224.generate_x224Ccf_header(RDP::X224_TPDU_CONNECTION_CONFIRM, length - 5)
 
-  tpkt.generate_packet(length) + x224_header + if req.kind_of? RDP::NegFailureHeader
-                                                          req.generate_neg_failure_header(selected)
-                                                        else
-                                                          req.generate_packet
-                                                        end
+  tpkt.generate_packet(length) + x224_header +
+    (req.is_a?(RDP::NegFailureHeader) ? req.generate_neg_failure_header(selected) : req.generate_packet)
 end
-
 
 def listen
   begin
@@ -35,7 +30,7 @@ def listen
     puts "Got From Client:\r\n #{rdp.explain}"
 
     puts 'Going to send first response:'
-    client.write(first_response(RDP::ERR_SSL_NOT_ALLOWED_BY_SERVER, 0, true ) )
+    client.write(first_response(RDP::ERR_SSL_NOT_ALLOWED_BY_SERVER, 0, true))
     puts 'sent it'
 
     rdp.read

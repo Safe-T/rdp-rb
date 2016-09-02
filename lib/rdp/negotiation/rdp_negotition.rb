@@ -151,11 +151,7 @@ module RDP
     end
 
     def read
-      result = read_tpkt
-      if result
-        read_x224_crq
-      end
-
+      read_x224_crq if read_tpkt
     end
 
     def explain
