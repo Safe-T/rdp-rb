@@ -211,7 +211,7 @@ module RDP
 
         # puts "parsing: #{parsing}"
 
-        raise RDP::RDPException, 'Invalid negotiation length'              unless parsing[2] == 0x0008 # it must be always equal to 8
+        raise RDP::RDPException, 'Invalid negotiation length'              unless parsing[2] == RDP::NEG_RSP_LENGTH # it must be always equal to 8
         raise RDP::RDPException, 'Invalid negotiation request type'        unless parsing[0] == RDP::TYPE_RDP_NEG_REQ
         raise RDP::RDPException, 'Invalid negotiation requested protocols' if     parsing[3]  > RDP::PROTOCOL_ALL
         unless [
@@ -253,7 +253,7 @@ module RDP
 
         raise RDP::RDPException, 'Invalid correlation version' unless parsing[0] == RDP::TYPE_RDP_CORRELATION_INFO
         raise RDP::RDPException, 'Invalid correlation flags'   unless parsing[1] == 0x00
-        raise RDP::RDPException, 'Invalid correlation length'  unless parsing[2] == 0x0024
+        raise RDP::RDPException, 'Invalid correlation length'  unless parsing[2] == RDP::X224_CORRELATION_LENGTH
 
         # Important!
         # DO NOT VALIDATE CorrelationId and Reserved in this location, they are they are not yet fully parsed here!

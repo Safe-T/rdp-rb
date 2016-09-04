@@ -16,6 +16,8 @@ module RDP
 
   NEG_RSP_LENGTH                        = 8
   NEG_FAILURE_LENGTH                    = 8
+  
+  X224_CORRELATION_LENGTH               = 0x0024
 
   PRECONNECTION_PDU_V1_SIZE             = 16
   PRECONNECTION_PDU_V2_MIN_SIZE         = (PRECONNECTION_PDU_V1_SIZE + 2)
