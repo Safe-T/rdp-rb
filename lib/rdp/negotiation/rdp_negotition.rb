@@ -126,41 +126,34 @@
 #
 
 module RDP
-  
+
   class NegReqAction
-    
     def initialize(socket)
       @socket = socket
     end
-    
+
     def read_tpkt
-      
       payload      = @socket.read(4) unless @socket.closed?
-      
+
       # can be nil with some clients, that is no headers were sent again/first time
       return false if payload.nil?
-      
+
       @tpkt_header = TPKTHeaderParser.new(payload)
-      
+
       true
     end
-    
+
     def read_x224_crq
       to_read      = @tpkt_header.data - RDP::TPKT_HEADER_LENGTH # size to read minus the header size
       full_data    = @socket.read(to_read).to_s
-      
+
       @x224_header = X224Header.new(full_data)
-    
     end
-    
+
     def read
-      result = read_tpkt
-      if result
-        read_x224_crq
-      end
-    
+      read_x224_crq if read_tpkt
     end
-    
+
     def explain
       <<-EOF
     TPKT Header Data
@@ -172,7 +165,7 @@ module RDP
       Length indicator: #{@x224_header.length}
       PDU Type: #{@x224_header.pdu_type}, Code #{RDP.x224_tpdu_type[@x224_header.pdu_type]}
       Variable Part: #{@x224_header.variable_part.sub(/\r\n$/, '<<\r\n>>') rescue ''}
-      
+
       Variable: #{@x224_header.variable}
       Variable Type: #{@x224_header.variable_type}
       #{"Routing IP: #{@x224_header.variable_as_ip}" if @x224_header.variable_type == :routingToken}
@@ -186,7 +179,5 @@ module RDP
 
       EOF
     end
-  
-  
   end
 end
